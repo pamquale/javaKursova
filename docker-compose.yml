@@ -1,0 +1,69 @@
+services:
+  # Сервис СУБД PostgreSQL
+  db:
+    image: postgres:16
+    container_name: postgres-db-container
+    environment:
+      POSTGRES_DB: lms_db
+      POSTGRES_USER: lms_user
+      POSTGRES_PASSWORD: secretpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - lms-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lms_user -d lms_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Сервис брокера сообщений RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq-container
+    ports:
+      - "5672:5672"   # Порт для обмена сообщениями (AMQP протокол)
+      - "15672:15672" # Порт для веб-панели управления (Management UI)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - lms-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Сервис нашего Spring Boot веб-додатка
+  app:
+    build: .
+    container_name: spring-app-container
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/lms_db
+      SPRING_DATASOURCE_USERNAME: lms_user
+      SPRING_DATASOURCE_PASSWORD: secretpassword
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # Конфигурация подключения к RabbitMQ внутри сети Docker
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy # Приложение запустится строго после готовности брокера
+    networks:
+      - lms-network
+
+networks:
+  lms-network:
+    driver: bridge
+
+volumes:
+  pg_data:

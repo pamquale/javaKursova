@@ -1,0 +1,33 @@
+name: Java CI with Maven
+
+# Пайплайн срабатывает при каждом пуше (push) в ветку main
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Шаг 1: Клонирование (checkout) исходного кода репозитория на виртуальную машину
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Шаг 2: Развертывание и настройка среды Java (JDK 21)
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven' # Автоматическое кеширование зависимостей Maven для ускорения сборки
+
+      # Шаг 3: Предоставление прав на запуск локального скрипта сборщика Maven Wrapper
+      - name: Grant execute permission for mvnw
+        run: chmod +x mvnw
+
+      # Шаг 4: Запуск автоматического цикла интеграционного и модульного тестирования
+      - name: Run tests with Maven
+        run: ./mvnw test
