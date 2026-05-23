@@ -40,7 +40,7 @@ public class CourseControllerTest {
     // Определение и запуск реальной БД PostgreSQL в Docker-контейнере
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16")
-            .withDatabaseName("library_test_db")
+            .withDatabaseName("lms_test_db")
             .withUsername("test_user")
             .withPassword("test_pass");
 

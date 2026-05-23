@@ -31,7 +31,7 @@ public class CourseServiceIntegrationTest {
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16")
-            .withDatabaseName("library_service_test_db")
+            .withDatabaseName("lms_service_test_db")
             .withUsername("service_user")
             .withPassword("service_pass");
 
